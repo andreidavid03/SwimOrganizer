@@ -16,9 +16,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1A3A6B",
+  themeColor: "#172b52",
   width: "device-width",
   initialScale: 1,
+  // necesar pentru env(safe-area-inset-*) — vezi utilitatea pb-safe din globals.css
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -28,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ro" className="h-full">
-      <body className={`${inter.className} min-h-full bg-gray-50`}>
+      <body className={`${inter.className} min-h-full bg-slate-50`}>
         {children}
       </body>
     </html>

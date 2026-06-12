@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
+import { Building2, MapPin, Plus } from 'lucide-react'
+import { ButtonLink, Card, CardLink, EmptyState, PageHeader } from '@/components/ui'
 
 export default async function CluburiPage() {
   const supabase = await createClient()
@@ -11,42 +12,51 @@ export default async function CluburiPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Cluburi</h1>
-        <Link
-          href="/organizator/cluburi/nou"
-          className="bg-blue-800 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-        >
-          + Club nou
-        </Link>
-      </div>
+      <PageHeader
+        title="Cluburi"
+        action={
+          <ButtonLink href="/organizator/cluburi/nou">
+            <Plus className="w-4 h-4" aria-hidden />
+            Club nou
+          </ButtonLink>
+        }
+      />
 
       {clubs && clubs.length > 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <Card className="divide-y divide-slate-100">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {clubs.map((club: any) => (
-            <Link
+            <CardLink
               key={club.id}
               href={`/organizator/cluburi/${club.id}`}
-              className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition"
+              className="flex items-center justify-between px-5 py-4 rounded-none border-0 first:rounded-t-2xl last:rounded-b-2xl hover:bg-slate-50 hover:shadow-none"
             >
               <div>
-                <p className="font-semibold text-gray-900">{club.name}</p>
-                {club.city && <p className="text-sm text-gray-500">📍 {club.city}</p>}
+                <p className="font-semibold text-slate-900">{club.name}</p>
+                {club.city && (
+                  <p className="text-sm text-slate-500 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3.5 h-3.5" aria-hidden />
+                    {club.city}
+                  </p>
+                )}
               </div>
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-slate-400">
                 {new Date(club.created_at).toLocaleDateString('ro-RO')}
               </span>
-            </Link>
+            </CardLink>
           ))}
-        </div>
+        </Card>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center text-gray-400">
-          <p className="text-4xl mb-3">🏊</p>
-          <p className="font-medium">Niciun club adăugat încă.</p>
-          <Link href="/organizator/cluburi/nou" className="text-blue-700 text-sm mt-2 inline-block hover:underline">
-            Adaugă primul club →
-          </Link>
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="Niciun club adăugat încă."
+          action={
+            <ButtonLink href="/organizator/cluburi/nou" variant="secondary">
+              <Plus className="w-4 h-4" aria-hidden />
+              Adaugă primul club
+            </ButtonLink>
+          }
+        />
       )}
     </div>
   )

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
+import { Button, ButtonLink, Card, FormError, Input, Label, PageHeader } from '@/components/ui'
 
 export default function ClubNouPage() {
   const router = useRouter()
@@ -38,66 +38,49 @@ export default function ClubNouPage() {
 
   return (
     <div className="max-w-lg">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/organizator/cluburi" className="text-gray-400 hover:text-gray-600 transition">
-          ← Cluburi
-        </Link>
-        <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-bold text-gray-900">Club nou</h1>
-      </div>
+      <PageHeader title="Club nou" backHref="/organizator/cluburi" backLabel="Cluburi" />
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <Card className="p-5 sm:p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Label htmlFor="name">
               Numele clubului <span className="text-red-500">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
+              id="name"
               name="name"
               type="text"
               value={form.name}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="ex: CS Neptun București"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Oraș
-            </label>
-            <input
+            <Label htmlFor="city">Oraș</Label>
+            <Input
+              id="city"
               name="city"
               type="text"
               value={form.city}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="ex: București"
             />
           </div>
 
-          {error && (
-            <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>
-          )}
+          <FormError>{error}</FormError>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-800 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {loading ? 'Se salvează...' : 'Salvează club'}
-            </button>
-            <Link
-              href="/organizator/cluburi"
-              className="px-6 py-2.5 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition"
-            >
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+            <ButtonLink href="/organizator/cluburi" variant="ghost">
               Anulează
-            </Link>
+            </ButtonLink>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Se salvează...' : 'Salvează club'}
+            </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </div>
   )
 }

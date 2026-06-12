@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
+import { Logo } from '@/components/logo'
+import { Button, Input, Label, Select, FormError } from '@/components/ui'
 
 type Club = Database['public']['Tables']['clubs']['Row']
 
@@ -59,16 +61,12 @@ export default function RegisterPage() {
     router.refresh()
   }
 
-  const inputClass = "w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-  const labelClass = "block text-sm font-medium text-slate-300 mb-2"
-
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8">
-          <div className="inline-flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-blue-500 rounded-lg" />
-            <span className="text-white font-semibold text-lg tracking-tight">SwimOrganizer</span>
+          <div className="mb-8">
+            <Logo tone="dark" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Cont nou</h1>
           <p className="text-slate-400">Creează-ți contul pentru a te înscrie la concursuri</p>
@@ -76,43 +74,43 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className={labelClass}>Nume complet</label>
-            <input name="fullName" type="text" value={form.fullName} onChange={handleChange} required className={inputClass} placeholder="Ion Popescu" />
+            <Label tone="dark" htmlFor="fullName">Nume complet</Label>
+            <Input tone="dark" id="fullName" name="fullName" type="text" value={form.fullName} onChange={handleChange} required placeholder="Ion Popescu" />
           </div>
           <div>
-            <label className={labelClass}>Email</label>
-            <input name="email" type="email" value={form.email} onChange={handleChange} required className={inputClass} placeholder="email@exemplu.ro" />
+            <Label tone="dark" htmlFor="email">Email</Label>
+            <Input tone="dark" id="email" name="email" type="email" value={form.email} onChange={handleChange} required placeholder="email@exemplu.ro" />
           </div>
           <div>
-            <label className={labelClass}>Telefon</label>
-            <input name="phone" type="tel" value={form.phone} onChange={handleChange} required className={inputClass} placeholder="07xx xxx xxx" />
+            <Label tone="dark" htmlFor="phone">Telefon</Label>
+            <Input tone="dark" id="phone" name="phone" type="tel" value={form.phone} onChange={handleChange} required placeholder="07xx xxx xxx" />
           </div>
           <div>
-            <label className={labelClass}>Club <span className="text-slate-500 font-normal">(opțional)</span></label>
-            <select name="clubId" value={form.clubId} onChange={handleChange} className={inputClass + " bg-slate-800"}>
+            <Label tone="dark" htmlFor="clubId">
+              Club <span className="text-slate-500 font-normal">(opțional)</span>
+            </Label>
+            <Select tone="dark" id="clubId" name="clubId" value={form.clubId} onChange={handleChange}>
               <option value="">{clubs.length === 0 ? 'Niciun club disponibil momentan' : 'Alege clubul'}</option>
               {clubs.map(club => (
                 <option key={club.id} value={club.id}>{club.name}{club.city ? ` — ${club.city}` : ''}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
-            <label className={labelClass}>Parolă</label>
-            <input name="password" type="password" value={form.password} onChange={handleChange} required minLength={6} className={inputClass} placeholder="Minim 6 caractere" />
+            <Label tone="dark" htmlFor="password">Parolă</Label>
+            <Input tone="dark" id="password" name="password" type="password" value={form.password} onChange={handleChange} required minLength={6} placeholder="Minim 6 caractere" />
           </div>
 
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">{error}</div>
-          )}
+          <FormError tone="dark">{error}</FormError>
 
-          <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50">
+          <Button type="submit" size="lg" disabled={loading} className="w-full">
             {loading ? 'Se creează contul...' : 'Creează cont'}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-slate-500 text-sm mt-6">
           Ai deja cont?{' '}
-          <Link href="/auth/login" className="text-blue-400 hover:text-blue-300 font-medium transition">Autentifică-te</Link>
+          <Link href="/auth/login" className="text-brand-400 hover:text-brand-300 font-medium transition">Autentifică-te</Link>
         </p>
       </div>
     </div>

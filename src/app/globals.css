@@ -1,21 +1,32 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+/*
+ * Design tokens — vezi DESIGN.md pentru regulile de utilizare.
+ * `brand` este albastrul "de bazin" al aplicației. Nu folosi `blue-*` direct.
+ */
+@theme {
+  --color-brand-50: #eff8ff;
+  --color-brand-100: #dbeefe;
+  --color-brand-200: #bfe2fd;
+  --color-brand-300: #93cffb;
+  --color-brand-400: #60b3f8;
+  --color-brand-500: #3b96f4;
+  --color-brand-600: #2578e8;
+  --color-brand-700: #1d61d3;
+  --color-brand-800: #1e4fab;
+  --color-brand-900: #1e4487;
+  --color-brand-950: #172b52;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-slate-50);
+  color: var(--color-slate-900);
   font-family: Inter, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
-input, select, textarea {
-  color: #0f172a;
-}
-
-input::placeholder {
-  color: #94a3b8;
+/* Padding pentru safe-area pe telefoane cu notch / home indicator (PWA). */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }

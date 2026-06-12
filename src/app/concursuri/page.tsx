@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- interogări Supabase încă netipizate */
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
+import { CalendarDays, MapPin, Trophy } from 'lucide-react'
+import { Badge, CardLink, EmptyState } from '@/components/ui'
 
 export default async function ConcursuriPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any
 
   // Concursuri deschise pentru înscriere
@@ -49,32 +50,30 @@ export default async function ConcursuriPage() {
     <div>
       {/* Concursuri deschise */}
       <section className="mb-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-slate-900">Înscrieri deschise</h2>
-        </div>
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Înscrieri deschise</h2>
 
         {openEvents && openEvents.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {openEvents.map((event: any) => (
-              <Link
-                key={event.id}
-                href={`/concursuri/${event.id}`}
-                className="bg-white rounded-2xl border border-slate-200 p-5 hover:border-blue-300 hover:shadow-sm transition group"
-              >
-                <div className="flex items-start justify-between mb-3">
+              <CardLink key={event.id} href={`/concursuri/${event.id}`} className="p-5">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
-                    <p className="font-semibold text-slate-900 group-hover:text-blue-700 transition">
+                    <p className="font-semibold text-slate-900 group-hover:text-brand-700 transition">
                       {event.name}
                     </p>
                     <p className="text-sm text-slate-500 mt-0.5">Ediția {event.edition}</p>
                   </div>
-                  <span className="text-xs font-medium bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full shrink-0">
-                    Deschis
-                  </span>
+                  <Badge variant="success" className="shrink-0">Deschis</Badge>
                 </div>
                 <div className="space-y-1.5 text-sm text-slate-500">
-                  <p>{new Date(event.date).toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {event.time?.slice(0, 5)}</p>
-                  <p>{event.location}</p>
+                  <p className="flex items-center gap-1.5">
+                    <CalendarDays className="w-4 h-4 shrink-0" aria-hidden />
+                    {new Date(event.date).toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {event.time?.slice(0, 5)}
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 shrink-0" aria-hidden />
+                    {event.location}
+                  </p>
                   {event.registration_deadline && (
                     <p className="text-amber-600 font-medium">
                       Termen înscriere: {new Date(event.registration_deadline).toLocaleDateString('ro-RO')}
@@ -83,51 +82,48 @@ export default async function ConcursuriPage() {
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-sm font-semibold text-slate-700">{event.entry_fee} lei / participant</span>
-                  <span className="text-sm text-blue-600 font-medium group-hover:underline">Înscrie-te →</span>
+                  <span className="text-sm text-brand-600 font-medium group-hover:underline">Înscrie-te →</span>
                 </div>
-              </Link>
+              </CardLink>
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 py-12 text-center">
-            <p className="text-slate-400 font-medium">Niciun concurs deschis momentan.</p>
-          </div>
+          <EmptyState
+            icon={Trophy}
+            title="Niciun concurs deschis momentan."
+            description="Revino mai târziu — concursurile noi apar aici imediat ce se deschid înscrierile."
+          />
         )}
       </section>
 
-      {/* Înscrierea mea */}
+      {/* Înscrierile mele */}
       {myEvents.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Înscrierea mea</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-4">Înscrierile mele</h2>
           <div className="space-y-3">
-            {myEvents.map(({ event, registrations }) => (
-              <Link
-                key={event.id}
-                href={`/concursuri/${event.id}`}
-                className="block bg-white rounded-2xl border border-slate-200 p-5 hover:border-blue-300 hover:shadow-sm transition"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="font-semibold text-slate-900">{event.name} — Ediția {event.edition}</p>
-                    <p className="text-sm text-slate-500">{new Date(event.date).toLocaleDateString('ro-RO')} · {event.location}</p>
+            {myEvents.map(({ event, registrations }) => {
+              const allPaid = registrations.every((r: any) => r.paid)
+              return (
+                <CardLink key={event.id} href={`/concursuri/${event.id}`} className="p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{event.name} — Ediția {event.edition}</p>
+                      <p className="text-sm text-slate-500">{new Date(event.date).toLocaleDateString('ro-RO')} · {event.location}</p>
+                    </div>
+                    <Badge variant={allPaid ? 'success' : 'warning'}>
+                      {allPaid ? 'Plătit' : 'Plată în așteptare'}
+                    </Badge>
                   </div>
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
-                    registrations.every((r: any) => r.paid)
-                      ? 'bg-green-50 text-green-700 border-green-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    {registrations.every((r: any) => r.paid) ? 'Plătit' : 'Plată în așteptare'}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {registrations.map((reg: any, i: number) => (
-                    <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
-                      {reg.swimmers?.full_name} · {reg.event_probes?.stroke}
-                    </span>
-                  ))}
-                </div>
-              </Link>
-            ))}
+                  <div className="flex flex-wrap gap-2">
+                    {registrations.map((reg: any, i: number) => (
+                      <Badge key={i} variant="neutral">
+                        {reg.swimmers?.full_name} · {reg.event_probes?.stroke}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardLink>
+              )
+            })}
           </div>
         </section>
       )}
