@@ -35,6 +35,7 @@ export interface Database {
           full_name: string
           phone: string
           club_id: string | null
+          is_admin: boolean
           created_at: string
         }
         Insert: {
@@ -306,6 +307,41 @@ export interface Database {
           dq?: boolean
           recorded_by?: string | null
           recorded_at?: string | null
+        }
+      }
+      event_invitations: {
+        Row: {
+          id: string
+          event_id: string
+          email: string
+          role: UserRole
+          token: string
+          invited_by: string
+          message: string
+          accepted_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          email: string
+          role?: UserRole
+          token?: string
+          invited_by: string
+          message?: string
+          accepted_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          email?: string
+          role?: UserRole
+          token?: string
+          invited_by?: string
+          message?: string
+          accepted_at?: string | null
+          created_at?: string
         }
       }
     }

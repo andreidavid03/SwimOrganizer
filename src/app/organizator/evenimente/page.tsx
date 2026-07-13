@@ -5,7 +5,9 @@ import { Badge, ButtonLink, Card, CardLink, EmptyState, PageHeader } from '@/com
 
 export default async function EvenimentePage() {
   const supabase = await createClient()
-  const { data: events } = await (supabase as any)
+  const sb = supabase as any
+
+  const { data: events } = await sb
     .from('events')
     .select('id, name, edition, date, location, published, registration_open, seeding_done')
     .order('date', { ascending: false })
@@ -28,24 +30,28 @@ export default async function EvenimentePage() {
             <CardLink
               key={event.id}
               href={`/organizator/evenimente/${event.id}`}
-              className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 rounded-none border-0 first:rounded-t-2xl last:rounded-b-2xl hover:bg-slate-50 hover:shadow-none"
+              className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 rounded-none border-0 first:rounded-t-2xl last:rounded-b-2xl hover:bg-slate-50 hover:shadow-none"
             >
-              <div>
-                <p className="font-semibold text-slate-900">{event.name} — Ediția {event.edition}</p>
-                <p className="text-sm text-slate-500 mt-0.5 flex items-center gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-900 truncate">
+                  {event.name} <span className="text-slate-400 font-normal">Ediția {event.edition}</span>
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
                   <span className="flex items-center gap-1">
                     <CalendarDays className="w-3.5 h-3.5" aria-hidden />
-                    {new Date(event.date).toLocaleDateString('ro-RO')}
+                    {new Date(event.date).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" aria-hidden />
-                    {event.location}
-                  </span>
-                </p>
+                  {event.location && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" aria-hidden />
+                      {event.location}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {event.registration_open && <Badge variant="info">Înscrieri deschise</Badge>}
-                {event.seeding_done && <Badge variant="neutral">Serii generate</Badge>}
+                {event.seeding_done && <Badge variant="success">Serii generate</Badge>}
                 <Badge variant={event.published ? 'success' : 'warning'}>
                   {event.published ? 'Publicat' : 'Draft'}
                 </Badge>
@@ -56,12 +62,12 @@ export default async function EvenimentePage() {
       ) : (
         <EmptyState
           icon={CalendarDays}
-          title="Niciun eveniment creat încă."
-          description="Creează primul concurs pentru a putea primi înscrieri."
+          title="Niciun eveniment creat."
+          description="Creează primul concurs — poți invita cluburi, genera serii și cronometra live."
           action={
             <ButtonLink href="/organizator/evenimente/nou">
-              <Plus className="w-4 h-4" aria-hidden />
-              Creează primul eveniment
+              <Plus className="w-4 h-4" />
+              Eveniment nou
             </ButtonLink>
           }
         />

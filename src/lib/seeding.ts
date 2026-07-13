@@ -5,12 +5,11 @@
 
 /** Ordinea de umplere a culoarelor, din centru spre exterior: pentru 8 → [4,5,3,6,2,7,1,8]. */
 export function laneOrder(lanesCount: number): number[] {
-  const order: number[] = []
-  let left = Math.ceil(lanesCount / 2)
-  let right = left + 1
-  while (order.length < lanesCount) {
-    if (left >= 1) order.push(left--)
-    if (right <= lanesCount && order.length < lanesCount) order.push(right++)
+  const center = Math.ceil(lanesCount / 2)
+  const order: number[] = [center]
+  for (let i = 1; order.length < lanesCount; i++) {
+    if (center + i <= lanesCount) order.push(center + i)
+    if (order.length < lanesCount && center - i >= 1) order.push(center - i)
   }
   return order
 }

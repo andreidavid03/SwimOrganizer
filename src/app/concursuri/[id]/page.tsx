@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Banknote, CalendarDays, ListOrdered, MapPin, Trophy, Waves } from 'lucide-react'
 import { GENDER_LABELS, STROKE_LABELS } from '@/lib/labels'
+import { parseTimeInput } from '@/lib/time'
 import { Badge, Button, ButtonLink, Card, EmptyState, FormError, PageHeader } from '@/components/ui'
 
 type Probe = { id: string; stroke: string; category: { id: string; label: string; gender: 'M' | 'F'; age_group_min: number; age_group_max: number; birth_year: number | null } }
@@ -20,6 +21,7 @@ export default function ConcursPage({ params }: { params: Promise<{ id: string }
   const [swimmers, setSwimmers] = useState<Swimmer[]>([])
   const [existing, setExisting] = useState<Set<string>>(new Set()) // `${swimmerId}:${probeId}`
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [times, setTimes] = useState<Record<string, string>>({}) // `${swimmerId}:${probeId}` → timp brut
   const [hasResults, setHasResults] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -109,10 +111,21 @@ export default function ConcursPage({ params }: { params: Promise<{ id: string }
     setError(null)
     setSuccess(false)
 
-    const rows = Array.from(selected).map(key => {
+    const rows: { swimmer_id: string; probe_id: string; seed_time: string | null }[] = []
+    for (const key of selected) {
       const [swimmer_id, probe_id] = key.split(':')
-      return { swimmer_id, probe_id }
-    })
+      const raw = times[key]?.trim()
+      let seed_time: string | null = null
+      if (raw) {
+        seed_time = parseTimeInput(raw)
+        if (!seed_time) {
+          setError(`Timp de referință invalid: „${raw}". Folosește formatul 1:23.45 (min:sec.sutimi).`)
+          setSaving(false)
+          return
+        }
+      }
+      rows.push({ swimmer_id, probe_id, seed_time })
+    }
     const { error } = await supabase.from('registrations').insert(rows)
 
     if (error) {
@@ -122,6 +135,7 @@ export default function ConcursPage({ params }: { params: Promise<{ id: string }
     }
 
     setSelected(new Set())
+    setTimes({})
     setSuccess(true)
     setSaving(false)
     load()
@@ -222,29 +236,47 @@ export default function ConcursPage({ params }: { params: Promise<{ id: string }
                           const already = existing.has(key)
                           const checked = selected.has(key)
                           return (
-                            <label
+                            <div
                               key={p.id}
-                              className={`flex items-center gap-3 rounded-xl border px-4 py-3 min-h-12 transition ${
+                              className={`rounded-xl border transition ${
                                 already
                                   ? 'bg-slate-50 border-slate-200 opacity-70'
                                   : checked
-                                    ? 'bg-brand-50 border-brand-300 cursor-pointer'
-                                    : 'border-slate-200 hover:border-brand-200 cursor-pointer'
+                                    ? 'bg-brand-50 border-brand-300'
+                                    : 'border-slate-200 hover:border-brand-200'
                               }`}
                             >
-                              <input
-                                type="checkbox"
-                                className="w-5 h-5 accent-brand-600 shrink-0"
-                                checked={already || checked}
-                                disabled={already}
-                                onChange={() => toggle(key)}
-                              />
-                              <span className="text-sm font-medium text-slate-800">
-                                {STROKE_LABELS[p.stroke as keyof typeof STROKE_LABELS] ?? p.stroke}
-                              </span>
-                              <span className="text-xs text-slate-500 ml-auto">{p.category.label}</span>
-                              {already && <Badge variant="success" className="shrink-0">Înscris</Badge>}
-                            </label>
+                              <label className={`flex items-center gap-3 px-4 py-3 min-h-12 ${already ? '' : 'cursor-pointer'}`}>
+                                <input
+                                  type="checkbox"
+                                  className="w-5 h-5 accent-brand-600 shrink-0"
+                                  checked={already || checked}
+                                  disabled={already}
+                                  onChange={() => toggle(key)}
+                                />
+                                <span className="text-sm font-medium text-slate-800">
+                                  {STROKE_LABELS[p.stroke as keyof typeof STROKE_LABELS] ?? p.stroke}
+                                </span>
+                                <span className="text-xs text-slate-500 ml-auto">{p.category.label}</span>
+                                {already && <Badge variant="success" className="shrink-0">Înscris</Badge>}
+                              </label>
+                              {checked && !already && (
+                                <div className="px-4 pb-3 flex items-center gap-2">
+                                  <label className="text-xs text-slate-500 shrink-0" htmlFor={`t-${key}`}>
+                                    Timp de referință <span className="text-slate-400">(opțional)</span>
+                                  </label>
+                                  <input
+                                    id={`t-${key}`}
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="1:23.45"
+                                    value={times[key] ?? ''}
+                                    onChange={e => setTimes(t => ({ ...t, [key]: e.target.value }))}
+                                    className="w-24 h-9 rounded-lg border border-slate-300 px-2 text-center font-mono text-sm tabular-nums outline-none focus:ring-2 focus:ring-brand-500"
+                                  />
+                                </div>
+                              )}
+                            </div>
                           )
                         })}
                       </div>

@@ -7,7 +7,7 @@ export default async function UtilizatoriPage() {
   const supabase = await createClient()
   const { data: profiles } = await (supabase as any)
     .from('profiles')
-    .select('id, full_name, email, phone, is_admin, created_at, clubs(name)')
+    .select('id, full_name, phone, is_admin, created_at, clubs(name)')
     .order('created_at', { ascending: false })
 
   return (
@@ -22,9 +22,9 @@ export default async function UtilizatoriPage() {
           {profiles.map((p: any) => (
             <div key={p.id} className="flex flex-wrap items-center gap-2 px-5 py-4">
               <div className="min-w-0">
-                <p className="font-medium text-slate-900 truncate">{p.full_name || p.email || 'Fără nume'}</p>
+                <p className="font-medium text-slate-900 truncate">{p.full_name || 'Fără nume'}</p>
                 <p className="text-xs text-slate-400 truncate">
-                  {p.email}{p.phone ? ` · ${p.phone}` : ''}{p.clubs?.name ? ` · ${p.clubs.name}` : ''}
+                  {p.phone || '—'}{p.clubs?.name ? ` · ${p.clubs.name}` : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2 ml-auto shrink-0">

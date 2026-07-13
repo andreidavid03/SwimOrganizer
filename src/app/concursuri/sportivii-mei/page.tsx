@@ -3,14 +3,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- interogări Supabase încă netipizate */
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Waves } from 'lucide-react'
+import { Pencil, Plus, Trash2, Waves } from 'lucide-react'
 import { GENDER_LABELS } from '@/lib/labels'
 import { Badge, Button, Card, EmptyState, FormError, Input, Label, PageHeader, Select } from '@/components/ui'
 
-type Swimmer = { id: string; full_name: string; birth_year: number; gender: 'M' | 'F'; clubs: { name: string } | null }
+type Swimmer = { id: string; full_name: string; birth_year: number; gender: 'M' | 'F'; club_id: string; clubs: { name: string } | null }
 type Club = { id: string; name: string; city: string }
 
 const currentYear = new Date().getFullYear()
+const emptyForm = { fullName: '', birthYear: '', gender: 'M', clubId: '' }
 
 export default function SportiviiMeiPage() {
   const supabase = createClient() as any
@@ -19,13 +20,15 @@ export default function SportiviiMeiPage() {
   const [clubs, setClubs] = useState<Club[]>([])
   const [loaded, setLoaded] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ fullName: '', birthYear: '', gender: 'M', clubId: '' })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const [{ data: sw }, { data: cl }] = await Promise.all([
-      supabase.from('swimmers').select('id, full_name, birth_year, gender, clubs(name)').order('full_name'),
+      supabase.from('swimmers').select('id, full_name, birth_year, gender, club_id, clubs(name)').order('full_name'),
       supabase.from('clubs').select('id, name, city').order('name'),
     ])
     setSwimmers(sw ?? [])
@@ -37,19 +40,39 @@ export default function SportiviiMeiPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [load])
 
+  function openAdd() {
+    setEditingId(null)
+    setForm(emptyForm)
+    setError(null)
+    setShowForm(true)
+  }
+
+  function openEdit(s: Swimmer) {
+    setEditingId(s.id)
+    setForm({ fullName: s.full_name, birthYear: String(s.birth_year), gender: s.gender, clubId: s.club_id })
+    setError(null)
+    setShowForm(true)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     setError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('swimmers').insert({
+    const payload = {
       full_name: form.fullName.trim(),
       birth_year: Number(form.birthYear),
       gender: form.gender,
       club_id: form.clubId,
-      parent_id: user?.id,
-    })
+    }
+
+    let error
+    if (editingId) {
+      ({ error } = await supabase.from('swimmers').update(payload).eq('id', editingId))
+    } else {
+      const { data: { user } } = await supabase.auth.getUser()
+      ;({ error } = await supabase.from('swimmers').insert({ ...payload, parent_id: user?.id }))
+    }
 
     if (error) {
       setError(error.message)
@@ -57,9 +80,22 @@ export default function SportiviiMeiPage() {
       return
     }
 
-    setForm({ fullName: '', birthYear: '', gender: 'M', clubId: '' })
+    setForm(emptyForm)
+    setEditingId(null)
     setShowForm(false)
     setSaving(false)
+    load()
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(null)
+    setError(null)
+    const { error } = await supabase.from('swimmers').delete().eq('id', id)
+    // Foreign key restrict → sportivul are înscrieri
+    if (error) {
+      setError('Nu poți șterge un sportiv care are deja înscrieri la concursuri.')
+      return
+    }
     load()
   }
 
@@ -72,7 +108,7 @@ export default function SportiviiMeiPage() {
         description="Copiii pe care îi poți înscrie la concursuri"
         action={
           !showForm && (
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={openAdd}>
               <Plus className="w-4 h-4" aria-hidden />
               Adaugă sportiv
             </Button>
@@ -82,6 +118,7 @@ export default function SportiviiMeiPage() {
 
       {showForm && (
         <Card className="p-5 sm:p-6 mb-6">
+          <h2 className="font-semibold text-slate-900 mb-4">{editingId ? 'Editează sportivul' : 'Sportiv nou'}</h2>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <Label htmlFor="fullName">Nume complet</Label>
@@ -118,12 +155,14 @@ export default function SportiviiMeiPage() {
             <FormError>{error}</FormError>
 
             <div className="flex flex-col-reverse sm:flex-row gap-3">
-              <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Anulează</Button>
-              <Button type="submit" disabled={saving}>{saving ? 'Se salvează...' : 'Salvează sportivul'}</Button>
+              <Button type="button" variant="ghost" onClick={() => { setShowForm(false); setEditingId(null) }}>Anulează</Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Se salvează...' : editingId ? 'Salvează modificările' : 'Salvează sportivul'}</Button>
             </div>
           </form>
         </Card>
       )}
+
+      {!showForm && error && <div className="mb-4"><FormError>{error}</FormError></div>}
 
       {swimmers.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -138,7 +177,33 @@ export default function SportiviiMeiPage() {
                   {s.birth_year} · {GENDER_LABELS[s.gender]}{s.clubs?.name ? ` · ${s.clubs.name}` : ''}
                 </p>
               </div>
-              <Badge variant="neutral" className="ml-auto shrink-0">{currentYear - s.birth_year} ani</Badge>
+              <div className="ml-auto flex items-center gap-1 shrink-0">
+                <Badge variant="neutral">{currentYear - s.birth_year} ani</Badge>
+                <button
+                  title="Editează"
+                  onClick={() => openEdit(s)}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                >
+                  <Pencil className="w-4 h-4" aria-hidden />
+                </button>
+                {deletingId === s.id ? (
+                  <button
+                    title="Confirmă ștergerea"
+                    onClick={() => handleDelete(s.id)}
+                    className="h-10 px-2 flex items-center justify-center rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-500 transition"
+                  >
+                    Sigur?
+                  </button>
+                ) : (
+                  <button
+                    title="Șterge"
+                    onClick={() => setDeletingId(s.id)}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                  >
+                    <Trash2 className="w-4 h-4" aria-hidden />
+                  </button>
+                )}
+              </div>
             </Card>
           ))}
         </div>
@@ -149,7 +214,7 @@ export default function SportiviiMeiPage() {
             title="Niciun sportiv adăugat încă."
             description="Adaugă-ți copilul pentru a-l putea înscrie la concursuri."
             action={
-              <Button onClick={() => setShowForm(true)}>
+              <Button onClick={openAdd}>
                 <Plus className="w-4 h-4" aria-hidden />
                 Adaugă sportiv
               </Button>

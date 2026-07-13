@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
 import { Logo } from '@/components/logo'
@@ -11,7 +11,13 @@ import { Button, Input, Label, Select, FormError } from '@/components/ui'
 type Club = Database['public']['Tables']['clubs']['Row']
 
 export default function RegisterPage() {
+  return <Suspense><RegisterForm /></Suspense>
+}
+
+function RegisterForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirectTo') || '/concursuri'
   const supabase = createClient()
 
   const [clubs, setClubs] = useState<Club[]>([])
@@ -57,7 +63,7 @@ export default function RegisterPage() {
       return
     }
 
-    router.push('/concursuri')
+    router.push(redirectTo)
     router.refresh()
   }
 
